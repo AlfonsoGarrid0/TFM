@@ -36,20 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define PCLK2 72000000UL //Reloj del bus ADC
-#define ADC_PRESCALER 8UL //configurable
-#define ADC_SAMP_CYCLES 480UL //configurable
-#define ADC_CONV_CYCLES 15UL //(12 bits resol. --> 15 ciclos)
-
-//#define ADC_FREQ ((PCLK2/ADC_PRESCALER) / (ADC_SAMP_CYCLES + ADC_CONV_CYCLES)) //frec a la q el ADC almacena una muestra
-//#define ADC_FREQ_PER_CH (ADC_FREQ / 3) //frec a la q el ADC almacena una muestra por cada canal
 #define ADC_FREQ 256UL //frecuencia de muestreo del ADC disparado por el TIMER2 (APB1/PSC_TIM2/ARR)
 
 #define ADC_BUFFER_SIZE 6UL //tamaño del buffer de ADC-DMA, modificándolo cambio la frecuencia de procesamiento
-
-// Frecuencia con la que se llena medio-buffer y salta el callback
-// —> Es la frecuencia real a la que calculo el promedio, envío por UART y guardo en el vector de procesamiento.
-//#define PROCESSING_FREQ (ADC_FREQ_PER_CH / ((ADC_BUFFER_SIZE/2)/3))
 
 #define PSD_TIME 1UL //Tiempo máximo durante el que puedo almacenar muestras (configurable) para hacer la PSD
 
@@ -146,7 +135,6 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 uint16_t accel_adc_buffer[ADC_BUFFER_SIZE];
-//const uint16_t adc_buffer_SIZE = sizeof(accel_adc_buffer)/sizeof(accel_adc_buffer[0]); // (3000 * 2 bytes = 6000) / 2 bytes) = 3000 posiciones tiene el buffer
 
 
 volatile uint8_t ADC_DMA_transfer_cmplt = 0;
@@ -165,7 +153,7 @@ const float zero_ref = 1.65; //(1.65 V)
 const float adxl335_precission = 0.33; // (Volts/g)
 
 
-char uart_tx_buffer[160]; //change 124 to 32000 if I want to send all the adc_buffer (3000 samples) in one single transmission
+//char uart_tx_buffer[160];
 
 
 float32_t fft_output[FFT_SIZE];
@@ -193,7 +181,7 @@ typedef enum { FLAT = 0, POS = 1, NEG = 2 } slope_t;
 slope_t slope = FLAT, prev_slope = FLAT;
 
 const float TH0_POS = 0.095;
-const float TH0_NEG = -0.095; //actualizar desde la GUI por commandstring
+const float TH0_NEG = -0.095;
 float der = 0;
 
 uint8_t stim_flag = 0;
@@ -1114,7 +1102,7 @@ void ComputePSD(void){
 }
 
 
-void CheckStim(void){ //pasar parámetros en vez de void? (por ejemplo, para asegurar q idx no aumenta mientras estoy usandolo en esta funcion, asi no uso variables globales)
+void CheckStim(void){
 
 	//if(idx==0) return; --> no es necesario ya que como mínimo la 1ª vez que se llame a esta función se tendrán 256 muestras y lo hago modo circular
 
@@ -1151,8 +1139,6 @@ void CheckStim(void){ //pasar parámetros en vez de void? (por ejemplo, para ase
 	}
 
 	prev_slope = slope;
-
-	//if(slope = 0 mucho tiempo){STOP STIM IN BOTH} --> no hace falta, si no hay temblor como mucho estimulo 1 seg
 }
 
 
@@ -1287,3 +1273,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
